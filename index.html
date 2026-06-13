@@ -1,167 +1,150 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Biblia - Agenda devocional</title>
-    <style>
-      html {
-        font-size: 9.5px;
-      }
-      body {
-        margin: 0;
-        background: #FDF4E3;
-      }
-      #splash-screen {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #FDF4E3;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-      }
-      #splash-video {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        opacity: 0;
-        transition: opacity 0.25s ease-in-out;
-        pointer-events: none;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="splash-screen">
-      <video id="splash-video" playsinline autoplay muted preload="auto">
-        <source src="assets/splash/intro.mp4" type="video/mp4" />
-        <source src="/assets/splash/intro.mp4" type="video/mp4" />
-      </video>
-    </div>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <script>
-      const initSplash = () => {
-        const splash = document.getElementById('splash-screen');
-        const video = document.getElementById('splash-video');
-        let transitioned = false;
-        let playTimer = null;
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bibluo - Aprende la Biblia</title>
 
-        function transitionOut() {
-          if (transitioned) return;
-          transitioned = true;
+<style>
+body{
+    margin:0;
+    font-family:Arial, sans-serif;
+    background:linear-gradient(135deg,#0f172a,#1e293b);
+    color:white;
+    text-align:center;
+}
 
-          if (playTimer) {
-            clearTimeout(playTimer);
-          }
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:60px 20px;
+}
 
-          // Smooth fade out (300ms maximum transition)
-          if (splash) {
-            splash.style.transition = 'opacity 0.3s ease-out';
-            splash.style.opacity = '0';
-          }
+.logo{
+    width:140px;
+    height:140px;
+    margin:auto;
+    border-radius:30px;
+    background:linear-gradient(135deg,#f59e0b,#fbbf24);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:70px;
+    box-shadow:0 0 30px rgba(251,191,36,.5);
+}
 
-          setTimeout(() => {
-            if (splash) {
-              splash.style.display = 'none';
-            }
-            // Clean up and free resources immediately to prevent memory leak
-            if (video) {
-              try {
-                video.pause();
-                video.src = '';
-                video.load();
-              } catch (e) {
-                console.error('Error cleaning up video resources:', e);
-              }
-              try {
-                video.remove();
-              } catch (e) {}
-            }
-            if (splash) {
-              try {
-                splash.remove();
-              } catch (e) {}
-            }
-          }, 300);
-        }
+h1{
+    font-size:48px;
+    margin-top:25px;
+}
 
-        // 1. Schedule absolute fallback timeout immediately to guarantee we never get stuck
-        const fallbackTimer = setTimeout(transitionOut, 4500);
+p{
+    font-size:20px;
+    opacity:.9;
+    line-height:1.7;
+}
 
-        if (video) {
-          // Fade in the video once it is playing to avoid any black frame visual jump
-          video.addEventListener('playing', () => {
-            video.style.opacity = '1';
-            // Start the 4.2-second (4200ms) countdown once playing begins
-            if (!playTimer) {
-              playTimer = setTimeout(() => {
-                clearTimeout(fallbackTimer);
-                transitionOut();
-              }, 4200);
-            }
-          });
+.card{
+    background:rgba(255,255,255,.08);
+    border-radius:20px;
+    padding:25px;
+    margin-top:40px;
+    backdrop-filter:blur(10px);
+}
 
-          // Transition out when the video naturally ends
-          video.addEventListener('ended', () => {
-            clearTimeout(fallbackTimer);
-            transitionOut();
-          });
+.features{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:20px;
+    margin-top:30px;
+}
 
-          // Fallback if there is an error playing the video
-          video.addEventListener('error', () => {
-            console.error('Video error event fired');
-            clearTimeout(fallbackTimer);
-            transitionOut();
-          });
+.feature{
+    background:rgba(255,255,255,.05);
+    padding:20px;
+    border-radius:15px;
+}
 
-          // Attempt playing the video safely
-          try {
-            const playPromise = video.play();
-            if (playPromise !== undefined && typeof playPromise.catch === 'function') {
-              playPromise.catch(err => {
-                console.warn('Autoplay failed, attempting muted play:', err);
-                try {
-                  video.muted = true;
-                  const playPromise2 = video.play();
-                  if (playPromise2 !== undefined && typeof playPromise2.catch === 'function') {
-                    playPromise2.catch(err2 => {
-                      console.error('Muted autoplay failed:', err2);
-                      clearTimeout(fallbackTimer);
-                      transitionOut();
-                    });
-                  }
-                } catch (mutedErr) {
-                  console.error('Muted play throw:', mutedErr);
-                  clearTimeout(fallbackTimer);
-                  transitionOut();
-                }
-              });
-            }
-          } catch (playErr) {
-            console.error('Direct video.play() call failed with error:', playErr);
-            // If play throws synchronously, transition out
-            clearTimeout(fallbackTimer);
-            transitionOut();
-          }
-        } else {
-          clearTimeout(fallbackTimer);
-          transitionOut();
-        }
-      };
+.footer{
+    margin-top:60px;
+    opacity:.7;
+    font-size:14px;
+}
+</style>
+</head>
 
-      if (document.readyState === 'loading') {
-        window.addEventListener('DOMContentLoaded', initSplash);
-      } else {
-        initSplash();
-      }
-    </script>
-  </body>
+<body>
+
+<div class="container">
+
+<div class="logo">📖</div>
+
+<h1>Bibluo</h1>
+
+<p>
+Aprende la Biblia de forma interactiva mediante lecciones,
+preguntas, desafíos, recompensas y progresión gamificada.
+</p>
+
+<div class="card">
+
+<h2>Características</h2>
+
+<div class="features">
+
+<div class="feature">
+📚<br><br>
+Lectura Bíblica Offline
+</div>
+
+<div class="feature">
+🧠<br><br>
+Aprendizaje por Niveles
+</div>
+
+<div class="feature">
+🏆<br><br>
+Logros y Recompensas
+</div>
+
+<div class="feature">
+🔥<br><br>
+Rachas y XP
+</div>
+
+<div class="feature">
+🎯<br><br>
+Desafíos Diarios
+</div>
+
+<div class="feature">
+⚔️<br><br>
+Debates Bíblicos
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+<h2>Contacto</h2>
+
+<p>
+Correo:<br>
+jairogzm2713@gmail.com
+</p>
+
+<p>
+Sitio oficial de la aplicación Bibluo.
+</p>
+
+</div>
+
+<div class="footer">
+© 2026 Bibluo - Aprende la Biblia
+</div>
+
+</div>
+
+</body>
 </html>
