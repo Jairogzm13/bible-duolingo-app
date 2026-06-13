@@ -1,10 +1,167 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Bibluo - Aprende la Biblia</title>
-</head>
-<body>
-    <h1>Bibluo - Aprende la Biblia</h1>
-    <p>Sitio oficial de la aplicación Bibluo.</p>
-</body>
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Biblia - Agenda devocional</title>
+    <style>
+      html {
+        font-size: 9.5px;
+      }
+      body {
+        margin: 0;
+        background: #FDF4E3;
+      }
+      #splash-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #FDF4E3;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+      }
+      #splash-video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.25s ease-in-out;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="splash-screen">
+      <video id="splash-video" playsinline autoplay muted preload="auto">
+        <source src="assets/splash/intro.mp4" type="video/mp4" />
+        <source src="/assets/splash/intro.mp4" type="video/mp4" />
+      </video>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    <script>
+      const initSplash = () => {
+        const splash = document.getElementById('splash-screen');
+        const video = document.getElementById('splash-video');
+        let transitioned = false;
+        let playTimer = null;
+
+        function transitionOut() {
+          if (transitioned) return;
+          transitioned = true;
+
+          if (playTimer) {
+            clearTimeout(playTimer);
+          }
+
+          // Smooth fade out (300ms maximum transition)
+          if (splash) {
+            splash.style.transition = 'opacity 0.3s ease-out';
+            splash.style.opacity = '0';
+          }
+
+          setTimeout(() => {
+            if (splash) {
+              splash.style.display = 'none';
+            }
+            // Clean up and free resources immediately to prevent memory leak
+            if (video) {
+              try {
+                video.pause();
+                video.src = '';
+                video.load();
+              } catch (e) {
+                console.error('Error cleaning up video resources:', e);
+              }
+              try {
+                video.remove();
+              } catch (e) {}
+            }
+            if (splash) {
+              try {
+                splash.remove();
+              } catch (e) {}
+            }
+          }, 300);
+        }
+
+        // 1. Schedule absolute fallback timeout immediately to guarantee we never get stuck
+        const fallbackTimer = setTimeout(transitionOut, 4500);
+
+        if (video) {
+          // Fade in the video once it is playing to avoid any black frame visual jump
+          video.addEventListener('playing', () => {
+            video.style.opacity = '1';
+            // Start the 4.2-second (4200ms) countdown once playing begins
+            if (!playTimer) {
+              playTimer = setTimeout(() => {
+                clearTimeout(fallbackTimer);
+                transitionOut();
+              }, 4200);
+            }
+          });
+
+          // Transition out when the video naturally ends
+          video.addEventListener('ended', () => {
+            clearTimeout(fallbackTimer);
+            transitionOut();
+          });
+
+          // Fallback if there is an error playing the video
+          video.addEventListener('error', () => {
+            console.error('Video error event fired');
+            clearTimeout(fallbackTimer);
+            transitionOut();
+          });
+
+          // Attempt playing the video safely
+          try {
+            const playPromise = video.play();
+            if (playPromise !== undefined && typeof playPromise.catch === 'function') {
+              playPromise.catch(err => {
+                console.warn('Autoplay failed, attempting muted play:', err);
+                try {
+                  video.muted = true;
+                  const playPromise2 = video.play();
+                  if (playPromise2 !== undefined && typeof playPromise2.catch === 'function') {
+                    playPromise2.catch(err2 => {
+                      console.error('Muted autoplay failed:', err2);
+                      clearTimeout(fallbackTimer);
+                      transitionOut();
+                    });
+                  }
+                } catch (mutedErr) {
+                  console.error('Muted play throw:', mutedErr);
+                  clearTimeout(fallbackTimer);
+                  transitionOut();
+                }
+              });
+            }
+          } catch (playErr) {
+            console.error('Direct video.play() call failed with error:', playErr);
+            // If play throws synchronously, transition out
+            clearTimeout(fallbackTimer);
+            transitionOut();
+          }
+        } else {
+          clearTimeout(fallbackTimer);
+          transitionOut();
+        }
+      };
+
+      if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', initSplash);
+      } else {
+        initSplash();
+      }
+    </script>
+  </body>
 </html>
